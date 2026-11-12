@@ -1,0 +1,1087 @@
+# ULTIMATE MASTER PROMPT
+# LAST CAMPUS: ZOMBIE OUTBREAK
+## Complete Small-Map 3D Zombie & Monster Survival Game
+
+### ROLE
+
+Act as a professional game development studio with specialists in 3D game programming, character animation, AI programming, multiplayer networking, game design, level integration, user interfaces, sound design and game optimization.
+
+Build a complete and playable 3D zombie survival game using MY EXISTING 3D MAP, MY MAP PDF AND MY PROVIDED 3D CHARACTER MODELS.
+
+The game must support both SINGLE PLAYER and MULTIPLAYER COOPERATIVE SURVIVAL.
+
+The objective is to create a small-map, highly replayable survival experience with roaming zombies, enemy waves, random loot, health packs, armor, fictional arcade combat equipment, boss fights, equipment upgrades, difficulty levels and multiplayer teamwork.
+
+Do not make an unnecessarily huge open-world game.
+
+Concentrate on making my existing small map feel alive, dangerous, populated and full of gameplay.
+
+---
+
+# SECTION 1: MOST IMPORTANT — EXISTING MAP MUST BE FIXED
+
+I ALREADY HAVE MY MAP.
+
+I will provide:
+1. My 3D map PDF.
+2. My existing 3D game map asset.
+3. My 3D character models.
+
+The supplied map is the permanent game environment.
+
+ABSOLUTELY DO NOT:
+- Generate another map.
+- Replace my original map.
+- Redesign buildings.
+- Change the road layout.
+- Change the ground layout.
+- Move buildings.
+- Delete existing objects.
+- Resize existing structures.
+- Change the architecture.
+- Generate a different environment.
+- Substitute a generated map for my uploaded map.
+
+Preserve the original map's visual identity, layout, geometry, materials and proportions.
+
+IMPORTANT ASSET HANDLING:
+
+The PDF is the map reference. If it contains a rendered 3D model, inspect it and use it appropriately. Use the actual supported 3D model file as the playable environment.
+
+If the PDF is only a visual document and not an importable 3D scene, do not pretend that it is a playable level. Use the supplied 3D map asset as the actual environment. If no actual 3D model is accessible, report the missing asset.
+
+You are allowed to create invisible technical gameplay systems:
+- Navigation mesh.
+- Collision detection.
+- Zombie spawn points.
+- Character spawn points.
+- Loot spawn points.
+- Boss spawn points.
+- Random wandering areas.
+- Enemy detection zones.
+- Interaction triggers.
+- Safe areas.
+- Objective areas.
+
+These must not alter the original visible environment.
+
+The entire game must use this map.
+
+# SECTION 2: GAME STYLE AND OVERALL EXPERIENCE
+
+Create a polished, atmospheric third-person 3D survival game.
+
+The game should combine familiar small-map zombie-survival conventions:
+
+- Randomly roaming enemies.
+- Horde attacks.
+- Survival waves.
+- Boss encounters.
+- Collectible supplies.
+- Random ground drops.
+- Health packs.
+- Medkits.
+- Armor.
+- Equipment upgrades.
+- Mystery supply crates.
+- Player XP.
+- Game currency.
+- Character selection.
+- Multiplayer cooperation.
+- Minimap.
+- Scoreboard.
+- Survival statistics.
+- Difficulty selection.
+
+The environment should feel like a living 3D game rather than an empty map with enemies placed in fixed positions.
+
+Create an original game identity. Use common survival-game mechanics as inspiration, but do not reproduce another game's protected maps, characters, logos, sounds, code or distinctive interface.
+
+# SECTION 3: THREE MAIN GAMEPLAY MODES
+
+Create these three modes:
+
+MODE 1 — SINGLE PLAYER
+
+- One human-controlled player.
+- Original map.
+- Randomly wandering zombies.
+- Increasing enemy waves.
+- Boss encounters.
+- Ground loot.
+- Random equipment drops.
+- Health and armor pickups.
+- Full survival progression.
+- Optional AI-controlled friendly companions if supported.
+
+MODE 2 — MULTIPLAYER CO-OP
+
+Support up to four players.
+
+- 1 player.
+- 2 players.
+- 3 players.
+- 4 players.
+
+Players enter the same fixed map.
+
+All players must see the same enemies, loot drops, bosses and events.
+
+Synchronize:
+- Player movement.
+- Character animations.
+- Health.
+- Armor.
+- Inventory.
+- Enemy positions.
+- Enemy health.
+- Enemy attacks.
+- Loot.
+- Boss health.
+- Wave progression.
+- Game currency.
+- Player elimination.
+- Reviving.
+
+Create a working lobby system, private room system and room invitation system when supported by the available networking infrastructure.
+
+MODE 3 — ENDLESS SURVIVAL
+
+Players attempt to survive as many waves as possible.
+
+- Enemies become progressively harder.
+- Special enemies appear.
+- Elite enemies appear.
+- Boss encounters occur periodically.
+- Supply rewards increase.
+- The game continues until all players are eliminated.
+
+Save the highest wave and player statistics.
+
+# SECTION 4: EXISTING 3D CHARACTER IMPLEMENTATION
+
+Use my supplied character models.
+
+Do not replace them with unrelated generated characters.
+
+Inspect each model and determine which characters are appropriate for:
+- Playable survivors.
+- Friendly NPCs.
+- Roaming infected.
+- Special enemies.
+- Boss characters.
+
+Modify characters where necessary.
+
+Allowed modifications:
+- Rigging.
+- Animation retargeting.
+- Texture correction.
+- Material correction.
+- Outfit customization.
+- Character accessories.
+- Character proportions only when necessary for technical compatibility.
+- Walking and running animation.
+- Idle animation.
+- Combat animation.
+- Interaction animation.
+- Hit reaction animation.
+
+MOST IMPORTANT REQUIREMENT:
+
+I want the existing 3D character models to actually move around the original map.
+
+Do not keep all characters in one position.
+
+Create a random roaming system.
+
+Every roaming character should:
+1. Spawn at a valid random location.
+2. Start moving around the map.
+3. Select different walkable destinations.
+4. Sometimes stop and idle.
+5. Sometimes change direction.
+6. Wander through appropriate open areas and corridors.
+7. Avoid getting stuck in walls.
+8. Avoid walking through buildings and obstacles.
+9. Use navigation and collision.
+10. Move naturally using animation.
+
+Not every character should follow the same route.
+
+Use varied movement speeds, idle durations and wandering patterns.
+
+The player-controlled character must remain under player control. NPC characters should use their own AI.
+
+# SECTION 5: RANDOM ZOMBIE SPAWNING AND ROAMING
+
+This is one of the most important features.
+
+Create a complete random zombie population system.
+
+Zombies should appear at multiple appropriate locations around the map.
+
+Do not make them all spawn directly in front of the player.
+
+Create:
+- Random zombie spawning.
+- Random zombie wandering.
+- Random patrol destinations.
+- Idle animations.
+- Random direction changes.
+- Group roaming.
+- Individual roaming.
+- Detection of players.
+- Player pursuit.
+- Enemy attacks.
+- Target selection.
+- Enemy defeat.
+- Respawning in later waves.
+
+Zombies should initially roam naturally.
+
+When they detect a player, they should begin following that player.
+
+When the player moves away or leaves their detection area, zombies should search and resume appropriate roaming behavior.
+
+Include different zombie behavior classes:
+
+1. WALKER: Slow and common.
+2. RUNNER: Fast and aggressive.
+3. ARMORED: More durable.
+4. SCREAMER: Alerts nearby enemies.
+5. BRUTE: Large and powerful.
+6. STALKER: Unpredictable movement.
+7. ELITE MUTANT: Rare and challenging.
+
+Every zombie must have:
+- A 3D model.
+- Animations.
+- Health.
+- Movement speed.
+- Detection range.
+- Attack behavior.
+- Damage values for game balancing.
+- Sound effects.
+- Defeat animation.
+
+Use the supplied character models wherever suitable and make modifications for enemy roles.
+
+# SECTION 6: THREE DIFFICULTY LEVELS
+
+Create exactly three main difficulty presets.
+
+EASY:
+- Fewer enemies.
+- Slower enemy movement.
+- Lower enemy health.
+- More frequent health pickups.
+- More frequent supply drops.
+- Less demanding bosses.
+- Longer preparation periods.
+
+NORMAL:
+- Balanced enemy population.
+- Regular spawning.
+- Normal boss difficulty.
+- Balanced supplies.
+- Moderate wave progression.
+
+HARD:
+- More enemies.
+- Faster enemy movement.
+- Stronger special enemies.
+- Less frequent supplies.
+- More difficult bosses.
+- Shorter preparation periods.
+- More challenging survival progression.
+
+Allow the player to select difficulty before starting.
+
+Add an optional Dynamic Difficulty Director.
+
+This computer-controlled system should automatically make the gameplay slightly easier or harder depending on player performance.
+
+For example:
+- If all players have high health and are eliminating enemies quickly, gradually increase enemy pressure.
+- If several players are struggling, reduce the intensity slightly.
+- If players are repeatedly eliminated, adjust subsequent waves.
+- If players are performing very well, introduce occasional elite enemies.
+
+The dynamic system must respect the selected difficulty.
+
+Never suddenly change the entire game's difficulty.
+
+Make all difficulty adjustments smooth and configurable.
+
+# SECTION 7: ZOMBIE WAVES
+
+Create a complete round-based survival system.
+
+The basic game should have an initial 10-wave session, with an optional endless mode afterward.
+
+Wave progression:
+
+- Wave 1: Introduction to survival.
+- Wave 2: Slightly more enemies.
+- Wave 3: Additional enemy types.
+- Wave 4: Increased enemy population.
+- Wave 5: First major boss encounter.
+- Wave 6: New enemy combinations.
+- Wave 7: More special enemies.
+- Wave 8: Increased intensity.
+- Wave 9: Elite enemies.
+- Wave 10: Major final boss.
+
+After wave 10, offer endless survival.
+
+Create a countdown between waves.
+
+During the countdown, allow players to:
+- Collect supplies.
+- Restore health.
+- Restore armor.
+- Change equipment.
+- Upgrade abilities.
+- Explore the map.
+- Coordinate with teammates.
+
+Show a clear wave announcement.
+
+Show how many enemies remain.
+
+Do not start the next wave before the current wave is completed.
+
+# SECTION 8: COMPLETE SURVIVAL PICKUP SYSTEM
+
+Create all the little items normally expected in a survival game.
+
+All pickups must be actual interactive objects, not decorative models.
+
+HEALTH ITEMS:
+
+1. Small health pack.
+2. Medium health pack.
+3. Large medical kit.
+4. Emergency healing pack.
+5. Full health supply.
+
+ARMOR ITEMS:
+
+1. Basic armor pickup.
+2. Medium armor pickup.
+3. Advanced armor pickup.
+4. Epic armor supply.
+5. Armor restoration pack.
+
+OTHER ITEMS:
+
+- Energy replenishment pack.
+- Temporary speed boost.
+- Temporary protection boost.
+- Temporary double reward bonus.
+- Enemy detection boost.
+- Ability recharge pack.
+- Experience reward.
+- Currency pickup.
+- Rare collectible.
+
+When a player approaches an item, display its name and an interaction prompt.
+
+The player should collect items using the interaction button.
+
+After collecting an item:
+- Update the inventory.
+- Update the corresponding HUD value.
+- Play a pickup animation or visual effect.
+- Play a sound.
+- Remove the ground item.
+- Synchronize the pickup with multiplayer teammates.
+
+Add item rarity:
+
+- Common.
+- Uncommon.
+- Rare.
+- Epic.
+- Legendary.
+
+Use different colors and effects to indicate rarity.
+
+# SECTION 9: GROUND DROPS AND RANDOM LOOT
+
+Create a complete random loot-drop system.
+
+Enemies have configurable chances of dropping:
+- Health supplies.
+- Armor supplies.
+- Energy refills.
+- Currency.
+- Special ability charges.
+- Random fictional combat equipment.
+- Rare collectible items.
+
+Create occasional special ground drops.
+
+Add:
+- Glowing pickup effects.
+- Floating item indicators.
+- Rarity-colored lights.
+- Pickup sound effects.
+- Item names.
+- Rarity indicators.
+
+Different enemy types can have different reward probabilities.
+
+Bosses should drop more valuable rewards.
+
+Create a random supply crate.
+
+When a player interacts with it, generate a random eligible item based on rarity.
+
+Prevent items from appearing inside walls, inaccessible spaces or outside the original map.
+
+Ground drops must be synchronized in multiplayer.
+
+# SECTION 10: FICTIONAL ARCADE COMBAT EQUIPMENT
+
+Create a collection of original fictional game-only combat devices.
+
+Do not create real-world firearm replicas or provide real-world firearm specifications, operation or construction information.
+
+Use stylized science-fiction equipment with abstract game statistics.
+
+Include different gameplay categories:
+
+- Close-range energy emitter.
+- Rapid energy projector.
+- Mid-range pulse device.
+- Long-range precision beam device.
+- Wide-area pulse device.
+- Freeze emitter.
+- Electric arc device.
+- Heavy fictional energy launcher.
+
+Each item should feel unique through its animations, visual effects, sounds and fictional game balancing.
+
+Include:
+- Equipment models.
+- Inventory icons.
+- Pickup models.
+- Equip animations.
+- Unequip animations.
+- Recharge animations.
+- Projectile visual effects.
+- Damage feedback.
+- Equipment rarity.
+- Upgrade levels.
+- Energy capacity.
+- Cooldowns.
+- Abstract damage ratings.
+- Abstract range ratings.
+
+Do not make multiple items that look and behave identically.
+
+Include a starter item so the player is never left without a basic way to defend themselves.
+
+Create random ground drops and rare equipment crate rewards.
+
+All combat functionality must work against AI enemies and boss health systems.
+
+# SECTION 11: EQUIPMENT UPGRADES
+
+Create a small upgrade station or interface.
+
+Players can spend collected game currency to improve their equipment.
+
+Upgrade categories:
+- Increased game damage rating.
+- Improved energy capacity.
+- Reduced recharge time.
+- Improved accuracy rating.
+- Improved visual effects.
+- Special elemental effects.
+
+Create upgrade levels:
+
+Level 1 — Standard.
+Level 2 — Improved.
+Level 3 — Advanced.
+Level 4 — Epic.
+Level 5 — Legendary.
+
+Each upgrade should visibly update the equipment and its game statistics.
+
+Save the equipment selection and upgrades where appropriate.
+
+# SECTION 12: PLAYER HEALTH, ARMOR AND MEDICAL SYSTEM
+
+Implement a complete health system.
+
+Each player must have:
+- Health bar.
+- Armor bar.
+- Health percentage.
+- Inventory.
+- Available healing items.
+- Damage feedback.
+- Downed state.
+- Elimination state.
+
+Create functional medkits and health pickups.
+
+Allow healing with an assigned interaction button.
+
+Add a configurable healing animation.
+
+Armor should provide a separate protective game stat.
+
+Epic armor should provide a higher level of protection than basic armor.
+
+When the player takes damage:
+- Update the HUD.
+- Play appropriate feedback.
+- Apply the game health calculation.
+- Trigger a hit animation where appropriate.
+
+When health reaches zero, enter the downed state if teammates are alive.
+
+# SECTION 13: BOSS FIGHT SYSTEM
+
+Create three boss difficulty categories.
+
+BOSS LEVEL 1 — MINI BOSS
+
+- Appears around wave 5.
+- Larger or more distinctive than regular enemies.
+- Higher health.
+- Special attack behavior.
+- Unique defeat reward.
+
+BOSS LEVEL 2 — ELITE BOSS
+
+- Appears during later survival waves.
+- More challenging behavior.
+- Multiple behavior phases.
+- Unique appearance.
+- Larger health bar.
+- Better loot rewards.
+
+BOSS LEVEL 3 — FINAL BOSS
+
+- Appears at wave 10.
+- Distinctive large character model.
+- Cinematic entrance.
+- Multiple phases.
+- Different movement patterns.
+- Unique sound design.
+- Large boss health bar.
+- Epic defeat announcement.
+- Legendary reward drop.
+
+BOSS AI:
+
+Bosses must not simply stand still.
+
+They should:
+- Move around the encounter area.
+- Select appropriate targets.
+- Change behavior between phases.
+- React to player actions.
+- Move away when appropriate.
+- Engage players again.
+- Have clear visual warnings before major game attacks.
+- Work in solo and multiplayer.
+
+Make boss battles challenging but fair.
+
+Do not make bosses impossible to defeat.
+
+Every boss must have a configurable health value and difficulty multiplier.
+
+# SECTION 14: MINIMAP AND NAVIGATION
+
+Create a functional minimap based on my actual original map.
+
+The minimap must accurately represent the supplied environment.
+
+Display:
+- Player position.
+- Teammate positions.
+- Important supply locations.
+- Current objectives.
+- Boss encounter marker.
+- Nearby enemy indicators when appropriate.
+- Map boundaries.
+
+Add a compass.
+
+Add a full-screen map view if the map layout allows it.
+
+Do not generate an unrelated minimap.
+
+# SECTION 15: PLAYER MOVEMENT AND CAMERA
+
+Use a smooth third-person camera.
+
+Required features:
+- Walking.
+- Running.
+- Sprinting.
+- Jumping.
+- Crouching.
+- Smooth turning.
+- Camera collision.
+- Smooth follow camera.
+- Adjustable camera sensitivity.
+- Aiming camera.
+- Camera zoom.
+- Smooth character animations.
+
+PC controls:
+
+WASD — Movement.
+Mouse — Camera.
+Shift — Sprint.
+Space — Jump.
+Ctrl — Crouch.
+E — Interact.
+R — Recharge equipped equipment.
+Tab — Inventory.
+Esc — Pause.
+
+Allow controls to be customized.
+
+# SECTION 16: INVENTORY
+
+Create a functional inventory screen.
+
+Include:
+- Collected health supplies.
+- Armor supplies.
+- Equipment.
+- Energy resources.
+- Consumables.
+- Upgrade currency.
+- Special rewards.
+
+Display:
+- Item icon.
+- Item name.
+- Quantity.
+- Rarity.
+- Description.
+- Equipped status.
+
+Allow players to equip, remove and use appropriate items.
+
+Keep the interface simple and understandable.
+
+# SECTION 17: RANDOM EVENTS
+
+Add small random events to make every match different.
+
+Examples:
+
+1. Rare supply drop.
+2. Elite enemy appearance.
+3. Special boss announcement.
+4. Bonus reward wave.
+5. Emergency health supply.
+6. Temporary enemy activity increase.
+7. Rare collectible appearance.
+8. Special survival challenge.
+
+Do not trigger too many events simultaneously.
+
+Keep event announcements clear and understandable.
+
+# SECTION 18: MULTIPLAYER LOBBY
+
+Create a complete lobby.
+
+Include:
+
+- Single Player.
+- Multiplayer.
+- Create Room.
+- Join Room.
+- Private Room.
+- Public Room.
+- Invite Players.
+- Player Roster.
+- Character Selection.
+- Difficulty Selection.
+- Ready Button.
+- Start Game.
+
+Support four-player cooperative gameplay where the networking infrastructure permits.
+
+Do not pretend that multiplayer works if no actual networking implementation exists.
+
+Use authoritative synchronization for game-critical systems.
+
+Provide a standalone single-player experience that works even without an internet connection.
+
+# SECTION 19: FRIENDLY TEAM SYSTEM
+
+Create basic cooperative mechanics.
+
+Players should be able to:
+- See teammates.
+- See teammate health.
+- Identify teammate locations.
+- Revive teammates.
+- Share selected supplies.
+- Cooperate during boss fights.
+- Receive team survival rewards.
+
+When a player is downed, display a teammate rescue indicator.
+
+Add a configurable revival duration.
+
+Allow the remaining players to continue fighting.
+
+If every player is eliminated, end the game.
+
+# SECTION 20: USER INTERFACE
+
+Create a professional modern survival-game UI.
+
+MAIN MENU:
+
+- Game title.
+- Play.
+- Single Player.
+- Multiplayer.
+- Character Selection.
+- Equipment Selection.
+- Statistics.
+- Settings.
+- Exit.
+
+IN-GAME HUD:
+
+- Health.
+- Armor.
+- Stamina.
+- Equipped equipment.
+- Energy capacity.
+- Current wave.
+- Enemies remaining.
+- Current difficulty.
+- Teammate health.
+- Objective.
+- Currency.
+- Minimap.
+
+PAUSE MENU:
+
+- Resume.
+- Restart.
+- Settings.
+- Controls.
+- Return to Lobby.
+- Quit.
+
+GAME OVER SCREEN:
+
+- Final wave.
+- Survival time.
+- Enemies defeated.
+- Bosses defeated.
+- Rewards.
+- Experience earned.
+- Highest personal score.
+- Play Again.
+- Return to Main Menu.
+
+All buttons must perform actual actions.
+
+# SECTION 21: CHARACTER PROGRESSION AND REWARDS
+
+Include a simple player progression system.
+
+- XP.
+- Player level.
+- Survival statistics.
+- Equipment unlocks.
+- Character cosmetics.
+- Achievements.
+- Best survival wave.
+- Boss defeat records.
+- Total enemies defeated.
+
+Create an achievements panel.
+
+Examples:
+- First Wave Completed.
+- First Boss Defeated.
+- Five Waves Survived.
+- Ten Waves Survived.
+- Team Reviver.
+- Survival Expert.
+
+Save progress between sessions.
+
+# SECTION 22: AUDIO AND ANIMATION
+
+Create:
+- Zombie idle sounds.
+- Zombie movement sounds.
+- Zombie detection sounds.
+- Monster sounds.
+- Boss entrance sounds.
+- Boss music.
+- Player footsteps.
+- Equipment pickup sounds.
+- Health pickup sounds.
+- Armor pickup sounds.
+- Menu music.
+- Wave announcements.
+- Victory sounds.
+- Defeat sounds.
+
+Create natural animations for:
+- Player characters.
+- Wandering characters.
+- Zombies.
+- Special enemies.
+- Bosses.
+- Pickups.
+- Interactive objects.
+
+Use the appropriate animations for every state.
+
+# SECTION 23: VISUAL QUALITY
+
+Create a visually attractive and coherent game.
+
+Include:
+- High-quality materials.
+- Realistic lighting.
+- Environmental shadows.
+- Smooth animation blending.
+- Ambient effects.
+- Subtle fog where appropriate.
+- Pickup effects.
+- Boss effects.
+- Equipment effects.
+- Clear enemy indicators.
+- High-quality user interface.
+
+Do not hide the map behind unnecessary visual effects.
+
+Do not modify the fixed map's appearance beyond compatible lighting and post-processing.
+
+# SECTION 24: PERFORMANCE OPTIMIZATION — VERY IMPORTANT
+
+This game uses a small map, so it must be optimized.
+
+Do not spawn unlimited zombies.
+
+Use configurable enemy limits.
+
+Recommended starting configuration:
+- Easy: 6–10 active enemies.
+- Normal: 10–16 active enemies.
+- Hard: 14–22 active enemies.
+
+Treat these as initial tuning values, not mandatory permanent limits.
+
+Adjust based on actual performance and the number of connected players.
+
+Use:
+- Object pooling.
+- Efficient navigation.
+- Distance-based AI updates.
+- Distance-based animation updates.
+- Frustum culling.
+- Level of detail.
+- Efficient collision.
+- Reduced unnecessary physics calculations.
+- Optimized shadows.
+- Efficient particle systems.
+- Proper cleanup of defeated enemies.
+- Network update optimization.
+
+Do not run complicated AI calculations every frame for every distant enemy.
+
+Prevent:
+- FPS drops.
+- Memory leaks.
+- Duplicate enemies.
+- Broken navigation.
+- Stuck characters.
+- Unresponsive controls.
+- Excessive physics calculations.
+- Multiplayer synchronization problems.
+
+Create Low, Medium and High graphics settings.
+
+Prioritize consistent playable performance.
+
+# SECTION 25: DEVELOPMENT ORDER
+
+Follow this exact implementation priority.
+
+PHASE 1 — MAP AND ASSET INTEGRATION
+- Inspect map PDF.
+- Import the original 3D map asset.
+- Inspect all character models.
+- Preserve the map.
+- Configure collisions.
+- Configure navigation.
+
+PHASE 2 — CHARACTER MOVEMENT
+- Import and rig characters.
+- Create random NPC roaming.
+- Create playable player controls.
+- Create camera.
+- Test map navigation.
+
+PHASE 3 — ZOMBIE AI
+- Random spawning.
+- Random wandering.
+- Enemy detection.
+- Enemy pursuit.
+- Enemy attacks.
+- Enemy health.
+- Enemy defeat.
+
+PHASE 4 — SURVIVAL SYSTEMS
+- Health packs.
+- Medkits.
+- Armor.
+- Inventory.
+- Ground drops.
+- Loot crates.
+- Equipment.
+- Upgrade system.
+
+PHASE 5 — WAVES AND BOSSES
+- Wave manager.
+- Three difficulty modes.
+- Dynamic difficulty director.
+- Boss system.
+- Boss rewards.
+- Endless mode.
+
+PHASE 6 — UI AND MULTIPLAYER
+- Main menu.
+- Lobby.
+- HUD.
+- Minimap.
+- Multiplayer synchronization.
+- Reviving.
+- Match results.
+
+PHASE 7 — POLISH AND OPTIMIZATION
+- Sound.
+- Animation.
+- Lighting.
+- Effects.
+- Performance.
+- Bug fixing.
+- Actual gameplay testing.
+
+# SECTION 26: FINAL GAMEPLAY TESTING
+
+Before declaring the game complete, test:
+
+1. Can the original map load?
+2. Is the original map unchanged?
+3. Can the player walk throughout the environment?
+4. Do the supplied characters actually move?
+5. Do NPCs roam at different random locations?
+6. Can zombies wander around the map?
+7. Do zombies detect the player?
+8. Can zombies pursue players?
+9. Can zombies be defeated?
+10. Do health packs work?
+11. Does the medkit restore health?
+12. Does armor work?
+13. Do ground drops appear?
+14. Can players collect items?
+15. Does random loot work?
+16. Does the inventory update?
+17. Does wave progression work?
+18. Do all three difficulty settings work?
+19. Does dynamic enemy scaling work?
+20. Can bosses appear?
+21. Can bosses be defeated?
+22. Do boss rewards work?
+23. Does single-player work without multiplayer?
+24. Does multiplayer synchronization work?
+25. Can players revive teammates?
+26. Does the game-over screen appear?
+27. Does saving and loading work?
+28. Does the game maintain acceptable performance?
+
+Fix errors before adding unnecessary extras.
+
+# SECTION 27: FINAL DELIVERABLE
+
+I expect a working, playable 3D zombie survival game.
+
+Provide:
+
+- Complete source project.
+- Original imported map.
+- Imported character models.
+- Functional character movement.
+- Random NPC roaming.
+- Zombie AI.
+- Zombie spawning.
+- Three difficulty settings.
+- Dynamic difficulty adjustment.
+- Solo survival.
+- Cooperative multiplayer where supported.
+- Health packs and medkits.
+- Armor pickups.
+- Random loot.
+- Ground equipment drops.
+- Equipment upgrades.
+- Zombie waves.
+- Three boss difficulty categories.
+- Final boss encounter.
+- Inventory.
+- Minimap.
+- UI and menus.
+- Progression.
+- Save system.
+- Sound.
+- Animation.
+- Optimization.
+
+Provide a playable build when the engine supports it.
+
+Report all unfinished features honestly.
+
+# FINAL COMMAND
+
+START WITH MY EXISTING MAP AND EXISTING CHARACTER MODELS.
+
+DO NOT CREATE A NEW MAP.
+
+MAKE MY PROVIDED CHARACTERS ROAM AROUND THE MAP AT RANDOM VALID LOCATIONS.
+
+MAKE ZOMBIES ROAM AROUND THE MAP.
+
+MAKE ZOMBIES DETECT, FOLLOW AND ENGAGE THE PLAYER.
+
+MAKE THE PLAYER ABLE TO COLLECT HEALTH PACKS, MEDKITS, ARMOR, EQUIPMENT AND RANDOM GROUND DROPS.
+
+MAKE SINGLE-PLAYER AND COOPERATIVE MULTIPLAYER GAMEPLAY.
+
+MAKE THREE DIFFICULTY LEVELS.
+
+MAKE THE COMPUTER DYNAMICALLY ADJUST ENEMY DIFFICULTY.
+
+CREATE AN EPIC BOSS SURVIVAL EXPERIENCE.
+
+KEEP THE GAME SMALL, FAST, OPTIMIZED AND REPLAYABLE.
+
+PRIORITIZE A COMPLETE WORKING GAME OVER DECORATIVE FEATURES.
+
+BUILD IT NOW.

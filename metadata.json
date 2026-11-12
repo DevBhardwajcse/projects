@@ -1,0 +1,6 @@
+{
+  "name": "Campus: Last Stand",
+  "description": "3D third-person campus zombie & titan survival game built on the exact 180m x 160m Campus 3D Visual Atlas with 7 zombie classes, 3 Titan bosses, co-op squad AI, weapon upgrades, and Gemini tactical intelligence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
