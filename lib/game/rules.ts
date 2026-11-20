@@ -1,7 +1,341 @@
+// Pure game rules, 3D multi-floor staircase/wall physics, weapon catalog, and 70/20/10 creepy zombie spawn logic
+
 export type GameMode = 'single' | 'coop' | 'endless';
-export type DifficultyLevel = 'easy' | 'normal' | 'hard';
-export type GraphicsQuality = 'low' | 'medium' | 'high';
-export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+export type DifficultyPreset = 'easy' | 'normal' | 'hard';
+export type POVMode = 'tpp' | 'fpp';
+
+export type WeaponId =
+  | 'sniper_bolt'
+  | 'sniper_thermal_dmr'
+  | 'sniper_gauss_rail'
+  | 'shotgun_pump'
+  | 'shotgun_autodrum'
+  | 'mid_assault_carbine'
+  | 'mid_tactical_smg'
+  | 'long_marksman_rifle'
+  | 'long_heavy_lmg'
+  | 'scar_x_projector';
+
+export type WeaponCategory = 'Sniper' | 'Shotgun' | 'Mid-Range' | 'Long-Range';
+
+export interface WeaponBaseSpec {
+  id: WeaponId;
+  name: string;
+  category: WeaponCategory;
+  baseDamage: number;
+  fireRateRpm: number;
+  baseCapacity: number;
+  baseReloadSec: number;
+  rangeMeters: number;
+  projectileSpeed: number;
+  pellets: number;
+  spreadRad: number;
+  zoomFov: number;
+  hasScopeOverlay: boolean;
+  unlockCost: number;
+  colorHex: string;
+  description: string;
+}
+
+export interface ComputedWeaponStats {
+  level: number;
+  damage: number;
+  fireIntervalMs: number;
+  capacity: number;
+  reloadSec: number;
+  nextUpgradeCost: number | null;
+}
+
+export const WEAPON_SPECS: Record<WeaponId, WeaponBaseSpec> = {
+  mid_assault_carbine: {
+    id: 'mid_assault_carbine',
+    name: 'M4-Vanguard Pulse Carbine',
+    category: 'Mid-Range',
+    baseDamage: 34,
+    fireRateRpm: 540,
+    baseCapacity: 32,
+    baseReloadSec: 1.7,
+    rangeMeters: 95,
+    projectileSpeed: 92,
+    pellets: 1,
+    spreadRad: 0.015,
+    zoomFov: 38,
+    hasScopeOverlay: false,
+    unlockCost: 0,
+    colorHex: '#38bdf8',
+    description: 'Balanced mid-range automatic carbine with holographic sight and low recoil.',
+  },
+  mid_tactical_smg: {
+    id: 'mid_tactical_smg',
+    name: 'Vector-9 Cryo Submachine Gun',
+    category: 'Mid-Range',
+    baseDamage: 25,
+    fireRateRpm: 780,
+    baseCapacity: 40,
+    baseReloadSec: 1.35,
+    rangeMeters: 70,
+    projectileSpeed: 84,
+    pellets: 1,
+    spreadRad: 0.028,
+    zoomFov: 42,
+    hasScopeOverlay: false,
+    unlockCost: 140,
+    colorHex: '#22d3ee',
+    description: 'Ultra-fast mid-range SMG ideal for indoor corridors, staircases, and tight rooms.',
+  },
+  shotgun_pump: {
+    id: 'shotgun_pump',
+    name: 'M870 Kinetic Breacher Shotgun',
+    category: 'Shotgun',
+    baseDamage: 25,
+    fireRateRpm: 95,
+    baseCapacity: 8,
+    baseReloadSec: 2.1,
+    rangeMeters: 42,
+    projectileSpeed: 76,
+    pellets: 8,
+    spreadRad: 0.085,
+    zoomFov: 48,
+    hasScopeOverlay: false,
+    unlockCost: 160,
+    colorHex: '#f97316',
+    description: 'Heavy 8-pellet pump-action shotgun that shreds creepy zombies in building interiors.',
+  },
+  shotgun_autodrum: {
+    id: 'shotgun_autodrum',
+    name: 'AA-12 Hellfire Drum Shotgun',
+    category: 'Shotgun',
+    baseDamage: 20,
+    fireRateRpm: 240,
+    baseCapacity: 20,
+    baseReloadSec: 2.4,
+    rangeMeters: 46,
+    projectileSpeed: 78,
+    pellets: 7,
+    spreadRad: 0.095,
+    zoomFov: 46,
+    hasScopeOverlay: false,
+    unlockCost: 340,
+    colorHex: '#fb923c',
+    description: 'Full-auto 20-round drum shotgun built for clearing staircases and mid-tier packs.',
+  },
+  long_marksman_rifle: {
+    id: 'long_marksman_rifle',
+    name: 'MK14 EBR Long-Range Rifle',
+    category: 'Long-Range',
+    baseDamage: 72,
+    fireRateRpm: 260,
+    baseCapacity: 20,
+    baseReloadSec: 1.9,
+    rangeMeters: 145,
+    projectileSpeed: 120,
+    pellets: 1,
+    spreadRad: 0.006,
+    zoomFov: 28,
+    hasScopeOverlay: false,
+    unlockCost: 220,
+    colorHex: '#a3e635',
+    description: 'High-velocity long-range battle rifle for quadrangle and skybridge engagements.',
+  },
+  long_heavy_lmg: {
+    id: 'long_heavy_lmg',
+    name: 'M249 Titan Suppressor LMG',
+    category: 'Long-Range',
+    baseDamage: 44,
+    fireRateRpm: 600,
+    baseCapacity: 85,
+    baseReloadSec: 3.0,
+    rangeMeters: 130,
+    projectileSpeed: 105,
+    pellets: 1,
+    spreadRad: 0.022,
+    zoomFov: 34,
+    hasScopeOverlay: false,
+    unlockCost: 380,
+    colorHex: '#eab308',
+    description: 'Sustained long-range 85-round light machine gun with armor-piercing rounds.',
+  },
+  sniper_bolt: {
+    id: 'sniper_bolt',
+    name: 'AWM-50 Anti-Materiel Bolt Sniper',
+    category: 'Sniper',
+    baseDamage: 220,
+    fireRateRpm: 55,
+    baseCapacity: 6,
+    baseReloadSec: 2.3,
+    rangeMeters: 220,
+    projectileSpeed: 165,
+    pellets: 1,
+    spreadRad: 0.001,
+    zoomFov: 16,
+    hasScopeOverlay: true,
+    unlockCost: 240,
+    colorHex: '#ec4899',
+    description: '8x optical bolt-action sniper rifle. Massive one-shot critical damage from rooftops.',
+  },
+  sniper_thermal_dmr: {
+    id: 'sniper_thermal_dmr',
+    name: 'SVD-Valkyrie Semi-Auto Sniper',
+    category: 'Sniper',
+    baseDamage: 130,
+    fireRateRpm: 155,
+    baseCapacity: 12,
+    baseReloadSec: 1.95,
+    rangeMeters: 195,
+    projectileSpeed: 150,
+    pellets: 1,
+    spreadRad: 0.0025,
+    zoomFov: 20,
+    hasScopeOverlay: true,
+    unlockCost: 350,
+    colorHex: '#a855f7',
+    description: 'Rapid semi-automatic marksman sniper with 6x tactical rangefinder optics.',
+  },
+  sniper_gauss_rail: {
+    id: 'sniper_gauss_rail',
+    name: 'XR-99 Gauss Railgun Sniper',
+    category: 'Sniper',
+    baseDamage: 330,
+    fireRateRpm: 45,
+    baseCapacity: 5,
+    baseReloadSec: 2.5,
+    rangeMeters: 250,
+    projectileSpeed: 195,
+    pellets: 1,
+    spreadRad: 0.0005,
+    zoomFov: 14,
+    hasScopeOverlay: true,
+    unlockCost: 500,
+    colorHex: '#f43f5e',
+    description: 'Hyper-velocity electromagnetic sniper rifle built to stagger Hard Creepy Zombies & Titans.',
+  },
+  scar_x_projector: {
+    id: 'scar_x_projector',
+    name: 'SCAR-X Hyper Long-Range Projector',
+    category: 'Long-Range',
+    baseDamage: 95,
+    fireRateRpm: 420,
+    baseCapacity: 45,
+    baseReloadSec: 1.6,
+    rangeMeters: 170,
+    projectileSpeed: 135,
+    pellets: 2,
+    spreadRad: 0.012,
+    zoomFov: 26,
+    hasScopeOverlay: true,
+    unlockCost: 620,
+    colorHex: '#10b981',
+    description: 'Classified military supply crate prototype firing twin long-range plasma lances.',
+  },
+};
+
+export const WEAPON_UPGRADE_COSTS: Record<number, number> = {
+  1: 120,
+  2: 240,
+  3: 420,
+  4: 680,
+};
+
+export function computeWeaponStats(weaponId: WeaponId, level: number): ComputedWeaponStats {
+  const clampedLevel = Math.max(1, Math.min(5, Math.floor(level)));
+  const spec = WEAPON_SPECS[weaponId];
+  const lvlBonus = clampedLevel - 1;
+
+  const damage = Math.round(spec.baseDamage * (1 + lvlBonus * 0.22));
+  const effectiveRpm = spec.fireRateRpm * (1 + lvlBonus * 0.08);
+  const fireIntervalMs = Math.max(55, Math.round(60000 / effectiveRpm));
+  const capacity = Math.round(spec.baseCapacity * (1 + lvlBonus * 0.18));
+  const reloadSec = Number((spec.baseReloadSec * Math.pow(0.9, lvlBonus)).toFixed(2));
+  const nextUpgradeCost = clampedLevel < 5 ? WEAPON_UPGRADE_COSTS[clampedLevel] : null;
+
+  return {
+    level: clampedLevel,
+    damage,
+    fireIntervalMs,
+    capacity,
+    reloadSec,
+    nextUpgradeCost,
+  };
+}
+
+// ============================================================================
+// RANDOM CREEPY ZOMBIES: 70% LOW / 20% MID / 10% HARD SPAWN PROBABILITY SYSTEM
+// ============================================================================
+
+export type CreepyZombieTier = 'low' | 'mid' | 'hard';
+
+export interface CreepyZombieTierSpec {
+  tier: CreepyZombieTier;
+  label: string;
+  spawnChance: number;
+  difficultyTag: string;
+  hpMultiplier: number;
+  speedMultiplier: number;
+  damageMultiplier: number;
+  scoreBonus: number;
+  scrapBonus: number;
+  colorHex: string;
+  eyeGlowHex: string;
+  creepyTrait: string;
+}
+
+export const CREEPY_ZOMBIE_TIERS: Record<CreepyZombieTier, CreepyZombieTierSpec> = {
+  low: {
+    tier: 'low',
+    label: 'Creepy Shambler (Low Level)',
+    spawnChance: 0.70,
+    difficultyTag: 'Easy to Defeat (70%)',
+    hpMultiplier: 0.85,
+    speedMultiplier: 0.92,
+    damageMultiplier: 0.8,
+    scoreBonus: 40,
+    scrapBonus: 14,
+    colorHex: '#4ade80',
+    eyeGlowHex: '#86efac',
+    creepyTrait: 'Twitching hollow-eyed corpse; fragile torso, easy to eliminate with any weapon.',
+  },
+  mid: {
+    tier: 'mid',
+    label: 'Spiked Night-Stalker (Mid Level)',
+    spawnChance: 0.20,
+    difficultyTag: 'Requires Skill (20%)',
+    hpMultiplier: 1.65,
+    speedMultiplier: 1.22,
+    damageMultiplier: 1.35,
+    scoreBonus: 110,
+    scrapBonus: 32,
+    colorHex: '#f59e0b',
+    eyeGlowHex: '#fde047',
+    creepyTrait: 'Sprinting side-weaving stalker with bone spines; requires aim tracking & kiting skill.',
+  },
+  hard: {
+    tier: 'hard',
+    label: 'Abyssal Terror Fiend (Hard Level)',
+    spawnChance: 0.10,
+    difficultyTag: 'High Skill & Very Difficult (10%)',
+    hpMultiplier: 3.1,
+    speedMultiplier: 1.38,
+    damageMultiplier: 1.95,
+    scoreBonus: 260,
+    scrapBonus: 75,
+    colorHex: '#ef4444',
+    eyeGlowHex: '#ff0055',
+    creepyTrait: 'Armored blood-mist horror with violent lunge & regeneration; demands sniper/shotgun mastery.',
+  },
+};
+
+/**
+ * Rolls a Creepy Zombie Tier using the exact user-specified distribution:
+ * - Low level (easy to defeat): 70% (0.00 <= r < 0.70)
+ * - Mid level (required skills): 20% (0.70 <= r < 0.90)
+ * - Hard level (very much skills & difficult): 10% (0.90 <= r < 1.00)
+ */
+export function rollCreepyZombieTier(rng: () => number = Math.random): CreepyZombieTier {
+  const r = Math.max(0, Math.min(0.999999, rng()));
+  if (r < 0.70) return 'low';
+  if (r < 0.90) return 'mid';
+  return 'hard';
+}
 
 export type ZombieClass =
   | 'walker'
@@ -12,869 +346,499 @@ export type ZombieClass =
   | 'stalker'
   | 'elite_mutant';
 
-export type BossTier = 1 | 2 | 3;
-
-export interface DifficultyConfig {
-  id: DifficultyLevel;
-  label: string;
-  maxActiveEnemies: number;
-  enemySpeedMultiplier: number;
-  enemyHealthMultiplier: number;
-  enemyDamageMultiplier: number;
-  lootDropChance: number;
-  prepTimeSeconds: number;
-  bossHealthMultiplier: number;
-}
-
-export const DIFFICULTY_PRESETS: Record<DifficultyLevel, DifficultyConfig> = {
-  easy: {
-    id: 'easy',
-    label: 'Easy',
-    maxActiveEnemies: 9,
-    enemySpeedMultiplier: 0.8,
-    enemyHealthMultiplier: 0.75,
-    enemyDamageMultiplier: 0.7,
-    lootDropChance: 0.75,
-    prepTimeSeconds: 18,
-    bossHealthMultiplier: 0.75,
-  },
-  normal: {
-    id: 'normal',
-    label: 'Normal',
-    maxActiveEnemies: 14,
-    enemySpeedMultiplier: 1.0,
-    enemyHealthMultiplier: 1.0,
-    enemyDamageMultiplier: 1.0,
-    lootDropChance: 0.55,
-    prepTimeSeconds: 12,
-    bossHealthMultiplier: 1.0,
-  },
-  hard: {
-    id: 'hard',
-    label: 'Hard',
-    maxActiveEnemies: 20,
-    enemySpeedMultiplier: 1.22,
-    enemyHealthMultiplier: 1.35,
-    enemyDamageMultiplier: 1.3,
-    lootDropChance: 0.4,
-    prepTimeSeconds: 8,
-    bossHealthMultiplier: 1.4,
-  },
-};
-
-export interface EquipmentSpec {
-  id: string;
-  name: string;
-  category: string;
-  roleClue: string;
-  rarity: ItemRarity;
-  baseDamage: number;
-  baseRange: number;
-  fireRate: number; // shots per second
-  energyCapacity: number;
-  rechargeTime: number; // seconds
-  projectileSpeed: number;
-  projectileColor: number;
-  spreadAngle: number;
-  projectilesPerShot: number;
-  elementalEffect: 'kinetic_pulse' | 'cryo_slow' | 'arc_chain' | 'plasma_splash' | 'sonic_push';
-  unlockCost: number;
-}
-
-export const FICTIONAL_EQUIPMENT_ARSENAL: EquipmentSpec[] = [
-  {
-    id: 'pulse_carbine',
-    name: 'Vanguard Pulse Emitter',
-    category: 'Mid-Range Pulse Device',
-    roleClue: 'Balanced Rapid Pulse · Starter Issue',
-    rarity: 'common',
-    baseDamage: 28,
-    baseRange: 55,
-    fireRate: 6.5,
-    energyCapacity: 32,
-    rechargeTime: 1.4,
-    projectileSpeed: 68,
-    projectileColor: 0x38bdf8,
-    spreadAngle: 0.03,
-    projectilesPerShot: 1,
-    elementalEffect: 'kinetic_pulse',
-    unlockCost: 0,
-  },
-  {
-    id: 'scatter_prism',
-    name: 'Aegis Wide-Area Scatter',
-    category: 'Close-Range Energy Emitter',
-    roleClue: '5-Beam Spread · Crowd Control',
-    rarity: 'uncommon',
-    baseDamage: 22,
-    baseRange: 28,
-    fireRate: 2.2,
-    energyCapacity: 12,
-    rechargeTime: 1.8,
-    projectileSpeed: 56,
-    projectileColor: 0xf59e0b,
-    spreadAngle: 0.16,
-    projectilesPerShot: 5,
-    elementalEffect: 'sonic_push',
-    unlockCost: 150,
-  },
-  {
-    id: 'scar_hyper_projector',
-    name: 'SCAR-X Hyper Projector',
-    category: 'Rapid Energy Projector',
-    roleClue: 'High-Velocity Thermal Stream',
-    rarity: 'rare',
-    baseDamage: 42,
-    baseRange: 70,
-    fireRate: 8.0,
-    energyCapacity: 40,
-    rechargeTime: 1.3,
-    projectileSpeed: 82,
-    projectileColor: 0xfacc15,
-    spreadAngle: 0.02,
-    projectilesPerShot: 1,
-    elementalEffect: 'kinetic_pulse',
-    unlockCost: 320,
-  },
-  {
-    id: 'cryo_lance',
-    name: 'Zero-K Freeze Emitter',
-    category: 'Freeze Emitter',
-    roleClue: 'Sub-Zero Beam · Slows Targets 50%',
-    rarity: 'rare',
-    baseDamage: 36,
-    baseRange: 48,
-    fireRate: 5.0,
-    energyCapacity: 28,
-    rechargeTime: 1.5,
-    projectileSpeed: 64,
-    projectileColor: 0x22d3ee,
-    spreadAngle: 0.025,
-    projectilesPerShot: 1,
-    elementalEffect: 'cryo_slow',
-    unlockCost: 400,
-  },
-  {
-    id: 'voltaic_arc',
-    name: 'Tesla-9 Electric Arc',
-    category: 'Electric Arc Device',
-    roleClue: 'Chain Lightning · Arcs Near Hostiles',
-    rarity: 'epic',
-    baseDamage: 54,
-    baseRange: 52,
-    fireRate: 3.8,
-    energyCapacity: 24,
-    rechargeTime: 1.6,
-    projectileSpeed: 76,
-    projectileColor: 0xa855f7,
-    spreadAngle: 0.04,
-    projectilesPerShot: 2,
-    elementalEffect: 'arc_chain',
-    unlockCost: 600,
-  },
-  {
-    id: 'titan_omega_launcher',
-    name: 'Helios Heavy Energy Launcher',
-    category: 'Heavy Fictional Energy Launcher',
-    roleClue: 'Explosive Plasma Core · Anti-Titan',
-    rarity: 'legendary',
-    baseDamage: 145,
-    baseRange: 85,
-    fireRate: 1.35,
-    energyCapacity: 10,
-    rechargeTime: 2.1,
-    projectileSpeed: 52,
-    projectileColor: 0xef4444,
-    spreadAngle: 0.01,
-    projectilesPerShot: 1,
-    elementalEffect: 'plasma_splash',
-    unlockCost: 900,
-  },
-];
-
-export const UPGRADE_LEVEL_NAMES: Record<number, string> = {
-  1: 'Standard',
-  2: 'Improved',
-  3: 'Advanced',
-  4: 'Epic',
-  5: 'Legendary',
-};
-
-export interface UpgradedWeaponStats {
-  level: number;
-  levelName: string;
-  damage: number;
-  energyCapacity: number;
-  rechargeTime: number;
-  nextUpgradeCost: number | null;
-}
-
-export function computeWeaponStats(spec: EquipmentSpec, level: number): UpgradedWeaponStats {
-  const clampedLevel = Math.max(1, Math.min(5, Math.floor(level)));
-  const mult = 1 + (clampedLevel - 1) * 0.28;
-  const capBonus = Math.round(spec.energyCapacity * (1 + (clampedLevel - 1) * 0.2));
-  const recharge = Number(
-    Math.max(0.55, spec.rechargeTime * Math.pow(0.88, clampedLevel - 1)).toFixed(2)
-  );
-  const nextUpgradeCost = clampedLevel < 5 ? Math.round((spec.unlockCost + 180) * clampedLevel * 0.85) : null;
-
-  return {
-    level: clampedLevel,
-    levelName: UPGRADE_LEVEL_NAMES[clampedLevel] || 'Standard',
-    damage: Math.round(spec.baseDamage * mult),
-    energyCapacity: capBonus,
-    rechargeTime: recharge,
-    nextUpgradeCost,
-  };
-}
-
 export interface ZombieClassSpec {
   id: ZombieClass;
   name: string;
-  baseHealth: number;
+  rigArchetype: 'walker' | 'spiked_raider' | 'halo_screamer' | 'skull_drake' | 'ape_colossus';
+  baseHp: number;
   baseSpeed: number;
-  detectionRange: number;
+  attackDamage: number;
   attackRange: number;
-  baseDamage: number;
-  attackWindup: number; // telegraph in seconds
-  attackCooldown: number;
-  xpReward: number;
+  scoreReward: number;
   scrapReward: number;
   scale: number;
-  behaviorPolicy: 'chaser' | 'charger' | 'shielded' | 'screamer_kiter' | 'flanker' | 'heavy_crusher';
+  colorHex: string;
+  accentHex: string;
+  behaviorDesc: string;
 }
 
 export const ZOMBIE_CLASS_SPECS: Record<ZombieClass, ZombieClassSpec> = {
   walker: {
     id: 'walker',
     name: 'Infected Walker',
-    baseHealth: 80,
-    baseSpeed: 3.2,
-    detectionRange: 34,
-    attackRange: 2.1,
-    baseDamage: 10,
-    attackWindup: 0.45,
-    attackCooldown: 1.3,
-    xpReward: 35,
-    scrapReward: 18,
+    rigArchetype: 'walker',
+    baseHp: 80,
+    baseSpeed: 3.4,
+    attackDamage: 10,
+    attackRange: 1.9,
+    scoreReward: 50,
+    scrapReward: 12,
     scale: 1.0,
-    behaviorPolicy: 'chaser',
+    colorHex: '#64748b',
+    accentHex: '#ef4444',
+    behaviorDesc: 'Relentless corpse shambler with crimson chest tendril.',
   },
   runner: {
     id: 'runner',
-    name: 'Spiked Runner',
-    baseHealth: 65,
-    baseSpeed: 6.4,
-    detectionRange: 42,
-    attackRange: 2.2,
-    baseDamage: 12,
-    attackWindup: 0.3,
-    attackCooldown: 1.0,
-    xpReward: 50,
-    scrapReward: 25,
-    scale: 1.02,
-    behaviorPolicy: 'charger',
+    name: 'Spiked Sprint Raider',
+    rigArchetype: 'spiked_raider',
+    baseHp: 68,
+    baseSpeed: 6.2,
+    attackDamage: 12,
+    attackRange: 1.8,
+    scoreReward: 70,
+    scrapReward: 16,
+    scale: 0.98,
+    colorHex: '#78716c',
+    accentHex: '#f97316',
+    behaviorDesc: 'Fast-sprinting raider with dorsal quills that climbs stairs rapidly.',
   },
   armored: {
     id: 'armored',
-    name: 'Riot Armored Infected',
-    baseHealth: 190,
-    baseSpeed: 2.7,
-    detectionRange: 32,
-    attackRange: 2.3,
-    baseDamage: 16,
-    attackWindup: 0.55,
-    attackCooldown: 1.5,
-    xpReward: 75,
-    scrapReward: 40,
+    name: 'Riot-Shielded Infected',
+    rigArchetype: 'spiked_raider',
+    baseHp: 175,
+    baseSpeed: 3.1,
+    attackDamage: 16,
+    attackRange: 2.0,
+    scoreReward: 110,
+    scrapReward: 26,
     scale: 1.12,
-    behaviorPolicy: 'shielded',
+    colorHex: '#475569',
+    accentHex: '#38bdf8',
+    behaviorDesc: 'Heavy torso plating and forearm shield reduce non-sniper damage.',
   },
   screamer: {
     id: 'screamer',
     name: 'Halo Screamer Anomaly',
-    baseHealth: 110,
-    baseSpeed: 4.1,
-    detectionRange: 50,
-    attackRange: 14.0,
-    baseDamage: 14,
-    attackWindup: 0.65,
-    attackCooldown: 2.4,
-    xpReward: 85,
-    scrapReward: 45,
-    scale: 1.28,
-    behaviorPolicy: 'screamer_kiter',
-  },
-  stalker: {
-    id: 'stalker',
-    name: 'Shadow Stalker',
-    baseHealth: 125,
-    baseSpeed: 5.6,
-    detectionRange: 45,
-    attackRange: 2.4,
-    baseDamage: 18,
-    attackWindup: 0.35,
-    attackCooldown: 1.1,
-    xpReward: 90,
-    scrapReward: 50,
-    scale: 1.08,
-    behaviorPolicy: 'flanker',
+    rigArchetype: 'halo_screamer',
+    baseHp: 120,
+    baseSpeed: 4.3,
+    attackDamage: 15,
+    attackRange: 3.2,
+    scoreReward: 130,
+    scrapReward: 30,
+    scale: 1.25,
+    colorHex: '#6b7280',
+    accentHex: '#e879f9',
+    behaviorDesc: 'Towering anomaly with floating horn-halo that buffs nearby undead.',
   },
   brute: {
     id: 'brute',
-    name: 'Campus Brute',
-    baseHealth: 340,
-    baseSpeed: 2.9,
-    detectionRange: 38,
-    attackRange: 3.0,
-    baseDamage: 26,
-    attackWindup: 0.7,
-    attackCooldown: 1.9,
-    xpReward: 140,
-    scrapReward: 75,
-    scale: 1.55,
-    behaviorPolicy: 'heavy_crusher',
+    name: 'Crusher Brute',
+    rigArchetype: 'ape_colossus',
+    baseHp: 290,
+    baseSpeed: 2.8,
+    attackDamage: 24,
+    attackRange: 2.5,
+    scoreReward: 170,
+    scrapReward: 42,
+    scale: 1.42,
+    colorHex: '#57534e',
+    accentHex: '#f59e0b',
+    behaviorDesc: 'Massive muscular juggernaut with ground-slam shockwaves.',
+  },
+  stalker: {
+    id: 'stalker',
+    name: 'Night Stalker',
+    rigArchetype: 'walker',
+    baseHp: 115,
+    baseSpeed: 6.6,
+    attackDamage: 18,
+    attackRange: 2.0,
+    scoreReward: 140,
+    scrapReward: 34,
+    scale: 1.04,
+    colorHex: '#1e293b',
+    accentHex: '#a855f7',
+    behaviorDesc: 'Flanking shadow predator that ambushes inside buildings and stairwells.',
   },
   elite_mutant: {
     id: 'elite_mutant',
-    name: 'Apex Crimson Mutant',
-    baseHealth: 480,
-    baseSpeed: 4.6,
-    detectionRange: 52,
-    attackRange: 3.2,
-    baseDamage: 32,
-    attackWindup: 0.6,
-    attackCooldown: 1.6,
-    xpReward: 220,
-    scrapReward: 120,
-    scale: 1.7,
-    behaviorPolicy: 'heavy_crusher',
+    name: 'Bio-Drake Mutant',
+    rigArchetype: 'skull_drake',
+    baseHp: 380,
+    baseSpeed: 4.4,
+    attackDamage: 28,
+    attackRange: 2.8,
+    scoreReward: 240,
+    scrapReward: 58,
+    scale: 1.55,
+    colorHex: '#3f3f46',
+    accentHex: '#10b981',
+    behaviorDesc: 'Scaled reptilian bio-weapon with spiked tail and acid leap.',
   },
 };
 
-export interface BossSpec {
-  tier: BossTier;
-  id: string;
-  name: string;
-  subtitle: string;
-  baseHealth: number;
-  baseSpeed: number;
-  baseDamage: number;
-  scale: number;
-  xpReward: number;
-  scrapReward: number;
-  guaranteedRarity: ItemRarity;
+export function pickZombieClassForTier(tier: CreepyZombieTier, wave: number, rng: () => number = Math.random): ZombieClass {
+  const r = rng();
+  if (tier === 'low') {
+    return r < 0.72 ? 'walker' : 'runner';
+  }
+  if (tier === 'mid') {
+    if (r < 0.35) return 'runner';
+    if (r < 0.70) return 'stalker';
+    return 'armored';
+  }
+  if (wave >= 3 && r < 0.35) return 'elite_mutant';
+  if (r < 0.70) return 'brute';
+  return 'screamer';
 }
 
-export const BOSS_SPECS: Record<BossTier, BossSpec> = {
-  1: {
-    tier: 1,
-    id: 'stalker_prime',
-    name: 'HALO OVERLORD',
-    subtitle: 'MINI-BOSS · WAVE 5 ANOMALY',
-    baseHealth: 1200,
-    baseSpeed: 4.2,
-    baseDamage: 28,
-    scale: 2.3,
-    xpReward: 600,
-    scrapReward: 350,
-    guaranteedRarity: 'rare',
+export type BossId = 'mini_boss_wave5' | 'elite_boss_wave8' | 'final_boss_wave10';
+
+export interface BossSpec {
+  id: BossId;
+  name: string;
+  subtitle: string;
+  rigArchetype: 'halo_screamer' | 'skull_drake' | 'ape_colossus';
+  waveTrigger: number;
+  baseHp: number;
+  speed: number;
+  attackDamage: number;
+  attackRange: number;
+  scale: number;
+  scoreReward: number;
+  scrapReward: number;
+  colorHex: string;
+  accentHex: string;
+  specialAbilities: string[];
+}
+
+export const BOSS_SPECS: Record<BossId, BossSpec> = {
+  mini_boss_wave5: {
+    id: 'mini_boss_wave5',
+    name: 'THE HALO OVERLORD',
+    subtitle: 'Wave 5 Anomaly Mini-Boss • Crowned Bio-Screamer',
+    rigArchetype: 'halo_screamer',
+    waveTrigger: 5,
+    baseHp: 1600,
+    speed: 3.9,
+    attackDamage: 30,
+    attackRange: 3.8,
+    scale: 2.4,
+    scoreReward: 1000,
+    scrapReward: 250,
+    colorHex: '#52525b',
+    accentHex: '#d946ef',
+    specialAbilities: ['Sonic Pulse Ring', 'Summon Runner Pack'],
   },
-  2: {
-    tier: 2,
-    id: 'skull_drake_titan',
+  elite_boss_wave8: {
+    id: 'elite_boss_wave8',
     name: 'SKULL-DRAKE TITAN',
-    subtitle: 'ELITE TITAN · BIO-REPTILIAN BEHEMOTH',
-    baseHealth: 2400,
-    baseSpeed: 4.5,
-    baseDamage: 36,
-    scale: 3.2,
-    xpReward: 1200,
-    scrapReward: 650,
-    guaranteedRarity: 'epic',
+    subtitle: 'Wave 8 Elite Boss • Armored Reptilian Bio-Titan',
+    rigArchetype: 'skull_drake',
+    waveTrigger: 8,
+    baseHp: 3200,
+    speed: 4.3,
+    attackDamage: 40,
+    attackRange: 4.5,
+    scale: 2.9,
+    scoreReward: 2200,
+    scrapReward: 450,
+    colorHex: '#3f3f46',
+    accentHex: '#22c55e',
+    specialAbilities: ['Spiked Tail Sweep', 'Acidic Bio-Barrage', 'Frenzy Charge'],
   },
-  3: {
-    tier: 3,
-    id: 'ape_colossus_titan',
+  final_boss_wave10: {
+    id: 'final_boss_wave10',
     name: 'THE CAMPUS DESTROYER',
-    subtitle: 'FINAL TITAN BOSS · MAGMA APE COLOSSUS',
-    baseHealth: 4200,
-    baseSpeed: 4.8,
-    baseDamage: 45,
-    scale: 4.5,
-    xpReward: 2500,
-    scrapReward: 1500,
-    guaranteedRarity: 'legendary',
+    subtitle: 'Wave 10 Final Boss • 6-Pack Magma Ape Colossus',
+    rigArchetype: 'ape_colossus',
+    waveTrigger: 10,
+    baseHp: 5600,
+    speed: 3.7,
+    attackDamage: 52,
+    attackRange: 5.2,
+    scale: 3.4,
+    scoreReward: 5000,
+    scrapReward: 1000,
+    colorHex: '#292524',
+    accentHex: '#ef4444',
+    specialAbilities: ['Seismic Quadrangle Slam', 'Meteor Boulder Throw', 'Undead Enrage Aura'],
   },
 };
 
 export interface WaveDefinition {
   waveNumber: number;
-  title: string;
-  totalEnemies: number;
-  composition: ZombieClass[];
-  bossTier: BossTier | null;
+  totalZombies: number;
+  maxConcurrent: number;
+  spawnIntervalMs: number;
+  hpMultiplier: number;
+  speedMultiplier: number;
+  allowedClasses: ZombieClass[];
+  bossToSpawn: BossId | null;
+  creepyTierProbabilities: { low: number; mid: number; hard: number };
 }
 
-export function getWaveDefinition(waveNumber: number, difficulty: DifficultyLevel): WaveDefinition {
+export function getWaveDefinition(
+  waveNumber: number,
+  difficulty: DifficultyPreset,
+  mode: GameMode,
+  playerCount = 1
+): WaveDefinition {
   const w = Math.max(1, Math.floor(waveNumber));
   const diffMult = difficulty === 'easy' ? 0.8 : difficulty === 'hard' ? 1.3 : 1.0;
-  const baseCount = Math.max(5, Math.round((6 + w * 3) * diffMult));
+  const coopMult = mode === 'coop' ? 1 + (Math.max(1, playerCount) - 1) * 0.35 : 1.0;
 
-  let composition: ZombieClass[] = ['walker'];
-  let title = 'Outbreak Perimeter Breach';
-  let bossTier: BossTier | null = null;
+  const totalZombies = Math.round((9 + w * 4) * diffMult * coopMult);
+  const maxConcurrent = Math.min(30, Math.round((7 + w * 2) * coopMult));
+  const spawnIntervalMs = Math.max(550, Math.round(2000 - w * 110));
+  const hpMultiplier = Number(((1 + (w - 1) * 0.14) * diffMult * coopMult).toFixed(2));
+  const speedMultiplier = Number(Math.min(1.5, (1 + (w - 1) * 0.03) * (difficulty === 'hard' ? 1.08 : 1)).toFixed(2));
 
-  if (w === 1) {
-    composition = ['walker', 'walker', 'runner'];
-    title = 'Wave 1 · Initial Quadrangle Breach';
-  } else if (w === 2) {
-    composition = ['walker', 'runner', 'runner'];
-    title = 'Wave 2 · Sprint Swarmers';
-  } else if (w === 3) {
-    composition = ['walker', 'runner', 'armored', 'screamer'];
-    title = 'Wave 3 · Riot & Screamer Alert';
-  } else if (w === 4) {
-    composition = ['runner', 'armored', 'screamer', 'stalker'];
-    title = 'Wave 4 · Academic Wing Lockdown';
-  } else if (w === 5) {
-    composition = ['walker', 'runner', 'armored', 'brute'];
-    title = 'Wave 5 · Mini-Boss: Halo Overlord';
-    bossTier = 1;
-  } else if (w === 6) {
-    composition = ['runner', 'armored', 'stalker', 'brute'];
-    title = 'Wave 6 · Undercroft Siege';
-  } else if (w === 7) {
-    composition = ['screamer', 'stalker', 'brute', 'armored'];
-    title = 'Wave 7 · Nightfall Stalkers';
-  } else if (w === 8) {
-    composition = ['runner', 'stalker', 'brute', 'elite_mutant'];
-    title = 'Wave 8 · Elite Boss: Skull-Drake Titan';
-    bossTier = 2;
-  } else if (w === 9) {
-    composition = ['armored', 'brute', 'stalker', 'elite_mutant'];
-    title = 'Wave 9 · Apex Mutant Surge';
-  } else if (w === 10) {
-    composition = ['runner', 'brute', 'elite_mutant'];
-    title = 'Wave 10 · Final Boss: The Campus Destroyer';
-    bossTier = 3;
-  } else {
-    composition = ['runner', 'armored', 'screamer', 'stalker', 'brute', 'elite_mutant'];
-    title = `Wave ${w} · Endless Cataclysm`;
-    if (w % 5 === 0) {
-      bossTier = 3;
-    } else if (w % 3 === 0) {
-      bossTier = 2;
-    }
-  }
+  const allowedClasses: ZombieClass[] = ['walker', 'runner', 'stalker', 'armored', 'screamer', 'brute', 'elite_mutant'];
+
+  let bossToSpawn: BossId | null = null;
+  if (w === 5) bossToSpawn = 'mini_boss_wave5';
+  else if (w === 8) bossToSpawn = 'elite_boss_wave8';
+  else if (w === 10 || (w > 10 && w % 5 === 0)) bossToSpawn = 'final_boss_wave10';
 
   return {
     waveNumber: w,
-    title,
-    totalEnemies: baseCount,
-    composition,
-    bossTier,
+    totalZombies,
+    maxConcurrent,
+    spawnIntervalMs,
+    hpMultiplier,
+    speedMultiplier,
+    allowedClasses,
+    bossToSpawn,
+    creepyTierProbabilities: { low: 0.70, mid: 0.20, hard: 0.10 },
   };
 }
 
 export interface DynamicDirectorInput {
-  playerHpRatio: number; // 0 to 1
-  recentKillRatePerMin: number;
-  downedCount: number;
-  baseDifficulty: DifficultyLevel;
+  playerHpRatio: number;
+  recentKillsPerMin: number;
+  playerAccuracyRatio: number;
+  timesDowned: number;
 }
 
-export interface DynamicDirectorOutput {
-  pressureMultiplier: number; // 0.75 to 1.35
-  lootBonusChance: number; // 0 to 0.25
-  spawnEliteOverride: boolean;
-  statusLabel: string;
+export interface DynamicDirectorAdjustment {
+  aggressionMultiplier: number;
+  lootDropBonus: number;
+  directorStateLabel: 'Mercy Assist' | 'Balanced Flow' | 'Apex Escalation';
 }
 
-export function evaluateDynamicDifficulty(input: DynamicDirectorInput): DynamicDirectorOutput {
-  let pressure = 1.0;
-  let lootBonus = 0.0;
-  let spawnElite = false;
-  let label = 'Balanced Pace';
-
-  if (input.playerHpRatio > 0.8 && input.recentKillRatePerMin >= 12 && input.downedCount === 0) {
-    pressure = 1.2;
-    spawnElite = true;
-    label = 'Escalating Threat (+20%)';
-  } else if (input.playerHpRatio < 0.35 || input.downedCount >= 2) {
-    pressure = 0.8;
-    lootBonus = 0.22;
-    label = 'Mercy Relief (-20% Threat, +Loot)';
-  } else if (input.playerHpRatio > 0.65 && input.recentKillRatePerMin >= 8) {
-    pressure = 1.1;
-    label = 'High Tempo (+10%)';
+export function evaluateDynamicDifficulty(input: DynamicDirectorInput): DynamicDirectorAdjustment {
+  if (input.playerHpRatio < 0.3 || input.timesDowned >= 2) {
+    return {
+      aggressionMultiplier: 0.82,
+      lootDropBonus: 0.35,
+      directorStateLabel: 'Mercy Assist',
+    };
   }
-
-  // Respect base difficulty bounds
-  const clampedPressure = Number(Math.max(0.75, Math.min(1.35, pressure)).toFixed(2));
+  if (input.playerHpRatio > 0.75 && input.recentKillsPerMin >= 18 && input.playerAccuracyRatio >= 0.45) {
+    return {
+      aggressionMultiplier: 1.22,
+      lootDropBonus: 0.1,
+      directorStateLabel: 'Apex Escalation',
+    };
+  }
   return {
-    pressureMultiplier: clampedPressure,
-    lootBonusChance: lootBonus,
-    spawnEliteOverride: spawnElite,
-    statusLabel: label,
+    aggressionMultiplier: 1.0,
+    lootDropBonus: 0.18,
+    directorStateLabel: 'Balanced Flow',
   };
 }
 
 export interface DamageResult {
-  newHp: number;
-  newArmor: number;
-  hpDamageTaken: number;
-  armorAbsorbed: number;
+  remainingHp: number;
+  remainingArmor: number;
+  hpLost: number;
+  armorLost: number;
   isDowned: boolean;
 }
 
 export function applyDamageWithArmor(
   currentHp: number,
   currentArmor: number,
-  rawDamage: number,
-  armorTierProtection: number = 0.65
+  incomingDamage: number
 ): DamageResult {
-  const dmg = Math.max(0, rawDamage);
-  const clampedProtection = Math.max(0.2, Math.min(0.85, armorTierProtection));
-
-  let armorAbsorbed = 0;
-  let newArmor = currentArmor;
-  if (currentArmor > 0) {
-    const desiredAbsorb = Math.round(dmg * clampedProtection);
-    armorAbsorbed = Math.min(currentArmor, desiredAbsorb);
-    newArmor = Math.max(0, currentArmor - armorAbsorbed);
+  const dmg = Math.max(0, Math.round(incomingDamage));
+  if (dmg === 0) {
+    return {
+      remainingHp: currentHp,
+      remainingArmor: currentArmor,
+      hpLost: 0,
+      armorLost: 0,
+      isDowned: currentHp <= 0,
+    };
   }
-
-  const hpDamageTaken = Math.max(1, Math.round(dmg - armorAbsorbed));
-  const newHp = Math.max(0, currentHp - hpDamageTaken);
+  const armorAbsorbMax = Math.round(dmg * 0.65);
+  const armorLost = Math.min(currentArmor, armorAbsorbMax);
+  const remainingArmor = Math.max(0, currentArmor - armorLost);
+  const hpLost = Math.min(currentHp, dmg - armorLost);
+  const remainingHp = Math.max(0, currentHp - hpLost);
 
   return {
-    newHp,
-    newArmor,
-    hpDamageTaken,
-    armorAbsorbed,
-    isDowned: newHp <= 0,
+    remainingHp,
+    remainingArmor,
+    hpLost,
+    armorLost,
+    isDowned: remainingHp <= 0,
   };
 }
 
 export type PickupType =
-  | 'health_small'
-  | 'health_medium'
+  | 'medkit_small'
   | 'medkit_large'
-  | 'health_emergency'
-  | 'health_full'
-  | 'armor_basic'
-  | 'armor_medium'
-  | 'armor_advanced'
-  | 'armor_epic'
-  | 'armor_restore'
-  | 'energy_pack'
-  | 'boost_speed'
-  | 'boost_shield'
-  | 'boost_double_scrap'
+  | 'energy_cell'
+  | 'armor_vest'
+  | 'speed_booster'
+  | 'damage_enhancer'
   | 'scrap_cache'
-  | 'supply_crate';
+  | 'mystery_crate';
 
 export interface PickupSpec {
   type: PickupType;
-  name: string;
-  rarity: ItemRarity;
-  healAmount: number;
-  armorAmount: number;
-  scrapAmount: number;
-  energyRefill: boolean;
-  storeInMedkitSlot: boolean;
-  buffType?: 'speed' | 'shield' | 'double_scrap';
-  buffDuration?: number;
-  colorHex: number;
+  label: string;
+  colorHex: string;
+  description: string;
 }
 
 export const PICKUP_CATALOG: Record<PickupType, PickupSpec> = {
-  health_small: {
-    type: 'health_small',
-    name: 'Small Health Pack (+25 HP)',
-    rarity: 'common',
-    healAmount: 25,
-    armorAmount: 0,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0x22c55e,
-  },
-  health_medium: {
-    type: 'health_medium',
-    name: 'Medium Health Pack (+50 HP)',
-    rarity: 'uncommon',
-    healAmount: 50,
-    armorAmount: 0,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0x10b981,
+  medkit_small: {
+    type: 'medkit_small',
+    label: 'First-Aid Injector (+30 HP)',
+    colorHex: '#22c55e',
+    description: 'Restores 30 Health immediately.',
   },
   medkit_large: {
     type: 'medkit_large',
-    name: 'Large Field Medkit (Portable +75 HP)',
-    rarity: 'rare',
-    healAmount: 75,
-    armorAmount: 0,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: true,
-    colorHex: 0x34d399,
+    label: 'Trauma Med-Pack (+75 HP)',
+    colorHex: '#10b981',
+    description: 'Restores 75 Health and clears exhaustion.',
   },
-  health_emergency: {
-    type: 'health_emergency',
-    name: 'Emergency Adrenaline Kit (+90 HP & Speed)',
-    rarity: 'epic',
-    healAmount: 90,
-    armorAmount: 0,
-    scrapAmount: 0,
-    energyRefill: true,
-    storeInMedkitSlot: false,
-    buffType: 'speed',
-    buffDuration: 12,
-    colorHex: 0xa855f7,
+  energy_cell: {
+    type: 'energy_cell',
+    label: 'Tactical Ammo Crate (+Full Mag)',
+    colorHex: '#38bdf8',
+    description: 'Refills magazine and restores reserve ammo.',
   },
-  health_full: {
-    type: 'health_full',
-    name: 'Full Bio-Restoration Supply (100% HP)',
-    rarity: 'legendary',
-    healAmount: 100,
-    armorAmount: 25,
-    scrapAmount: 0,
-    energyRefill: true,
-    storeInMedkitSlot: false,
-    colorHex: 0xf59e0b,
+  armor_vest: {
+    type: 'armor_vest',
+    label: 'Composite Armor Plate (+50 Armor)',
+    colorHex: '#6366f1',
+    description: 'Reinforces tactical vest by +50 Armor.',
   },
-  armor_basic: {
-    type: 'armor_basic',
-    name: 'Basic Kevlar Plate (+25 Armor)',
-    rarity: 'common',
-    healAmount: 0,
-    armorAmount: 25,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0x38bdf8,
+  speed_booster: {
+    type: 'speed_booster',
+    label: 'Adrenaline Surge (+30% Speed 15s)',
+    colorHex: '#eab308',
+    description: 'Boosts movement and reload speed for 15 seconds.',
   },
-  armor_medium: {
-    type: 'armor_medium',
-    name: 'Medium Tactical Vest (+50 Armor)',
-    rarity: 'uncommon',
-    healAmount: 0,
-    armorAmount: 50,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0x0ea5e9,
-  },
-  armor_advanced: {
-    type: 'armor_advanced',
-    name: 'Advanced Composite Armor (+75 Armor)',
-    rarity: 'rare',
-    healAmount: 0,
-    armorAmount: 75,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0x3b82f6,
-  },
-  armor_epic: {
-    type: 'armor_epic',
-    name: 'Epic Exo-Plating (Full 100 Armor)',
-    rarity: 'epic',
-    healAmount: 0,
-    armorAmount: 100,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0xa855f7,
-  },
-  armor_restore: {
-    type: 'armor_restore',
-    name: 'Nano-Armor Repair Cell (+40 Armor)',
-    rarity: 'uncommon',
-    healAmount: 0,
-    armorAmount: 40,
-    scrapAmount: 0,
-    energyRefill: true,
-    storeInMedkitSlot: false,
-    colorHex: 0x60a5fa,
-  },
-  energy_pack: {
-    type: 'energy_pack',
-    name: 'Plasma Energy Cell (Full Charge + Scrap)',
-    rarity: 'common',
-    healAmount: 0,
-    armorAmount: 0,
-    scrapAmount: 30,
-    energyRefill: true,
-    storeInMedkitSlot: false,
-    colorHex: 0x22d3ee,
-  },
-  boost_speed: {
-    type: 'boost_speed',
-    name: 'OverdriveInjector (+35% Move Speed)',
-    rarity: 'rare',
-    healAmount: 15,
-    armorAmount: 0,
-    scrapAmount: 0,
-    energyRefill: true,
-    storeInMedkitSlot: false,
-    buffType: 'speed',
-    buffDuration: 15,
-    colorHex: 0xfacc15,
-  },
-  boost_shield: {
-    type: 'boost_shield',
-    name: 'Aegis Kinetic Barrier (+Shield Boost)',
-    rarity: 'epic',
-    healAmount: 0,
-    armorAmount: 50,
-    scrapAmount: 0,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    buffType: 'shield',
-    buffDuration: 15,
-    colorHex: 0xc084fc,
-  },
-  boost_double_scrap: {
-    type: 'boost_double_scrap',
-    name: 'Bounty Amplifier (2x Scrap & XP)',
-    rarity: 'rare',
-    healAmount: 0,
-    armorAmount: 0,
-    scrapAmount: 60,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    buffType: 'double_scrap',
-    buffDuration: 20,
-    colorHex: 0xfbbf24,
+  damage_enhancer: {
+    type: 'damage_enhancer',
+    label: 'Overcharge Core (1.5x Damage 15s)',
+    colorHex: '#f43f5e',
+    description: 'Increases weapon damage by 50% for 15 seconds.',
   },
   scrap_cache: {
     type: 'scrap_cache',
-    name: 'Campus Tech Scrap Cache (+85 Scrap)',
-    rarity: 'uncommon',
-    healAmount: 0,
-    armorAmount: 0,
-    scrapAmount: 85,
-    energyRefill: false,
-    storeInMedkitSlot: false,
-    colorHex: 0xf59e0b,
+    label: 'Tech Scrap Cache (+85 Scrap)',
+    colorHex: '#f97316',
+    description: 'Used at the Equipment Upgrade Station.',
   },
-  supply_crate: {
-    type: 'supply_crate',
-    name: 'Mystery Military Supply Crate',
-    rarity: 'legendary',
-    healAmount: 50,
-    armorAmount: 50,
-    scrapAmount: 150,
-    energyRefill: true,
-    storeInMedkitSlot: true,
-    colorHex: 0xf97316,
+  mystery_crate: {
+    type: 'mystery_crate',
+    label: 'Military Supply Crate',
+    colorHex: '#a855f7',
+    description: 'Unlocks a random high-tier Sniper, Shotgun, or SCAR-X Projector.',
   },
 };
 
-export interface CampusLandmarkZone {
+export interface CampusZoneSpec {
   id: string;
-  name: string;
-  code: string;
-  minX: number;
-  maxX: number;
-  minZ: number;
-  maxZ: number;
+  nodeGroupName: string;
+  displayName: string;
+  bounds: { minX: number; maxX: number; minZ: number; maxZ: number };
+  elevationRange: [number, number];
+  tacticalNotes: string;
 }
 
-/**
- * Exact coordinate bounds from Campus 3D Visual Atlas Page 1 & Page 2
- * North = -Z, South = +Z, East = +X, West = -X
- */
-export const CAMPUS_ATLAS_ZONES: CampusLandmarkZone[] = [
+export const CAMPUS_ATLAS_ZONES: CampusZoneSpec[] = [
   {
-    id: '02_Academic_Block_B_Central',
-    name: 'Academic Block B (Central & TT Undercroft)',
-    code: 'BLK-B',
-    minX: -14,
-    maxX: 14,
-    minZ: -43,
-    maxZ: -21,
+    id: 'gate_roads',
+    nodeGroupName: '01_Terrain_Roads_And_Gate',
+    displayName: 'Main South Gate & Perimeter Road',
+    bounds: { minX: -90, maxX: 90, minZ: 52, maxZ: 78 },
+    elevationRange: [0.0, 6.2],
+    tacticalNotes: '7.5m asphalt perimeter road, guard booth, and overhead Main Entrance Gate Arch.',
   },
   {
-    id: '03_Academic_Block_A_West',
-    name: 'Academic Block A (West Lecture Wing)',
-    code: 'BLK-A',
-    minX: -44,
-    maxX: -20,
-    minZ: -23,
-    maxZ: -1,
+    id: 'block_b_central',
+    nodeGroupName: '02_Academic_Block_B_Central',
+    displayName: 'Central Academic Block B & Monument Arch',
+    bounds: { minX: -28, maxX: 28, minZ: -38, maxZ: -6 },
+    elevationRange: [0.0, 14.5],
+    tacticalNotes: 'Enterable 3-story hub with circular monument arch, Ground Table-Tennis Undercroft, and walkable staircases to 2nd & 3rd floor Skybridges.',
   },
   {
-    id: '04_Academic_Block_C_East',
-    name: 'Academic Block C (East Academic Wing)',
-    code: 'BLK-C',
-    minX: 14,
-    maxX: 38,
-    minZ: -24,
-    maxZ: -4,
+    id: 'block_a_west',
+    nodeGroupName: '03_Academic_Block_A_West',
+    displayName: 'West Academic Block A & Lecture Hall',
+    bounds: { minX: -66, maxX: -30, minZ: -30, maxZ: 28 },
+    elevationRange: [0.0, 14.2],
+    tacticalNotes: 'Enterable multi-story West wing with furnished Ground Lecture Classroom, staircases up to 2nd/3rd floors, and West Skybridge access.',
   },
   {
-    id: '05_Basement_Garage_And_Sports',
-    name: 'Basement Parking Ramp & Indoor Sports Hall',
-    code: 'BSMT',
-    minX: 15,
-    maxX: 41,
-    minZ: -51,
-    maxZ: -24,
+    id: 'block_c_east',
+    nodeGroupName: '04_Academic_Block_C_East',
+    displayName: 'East Academic Block C & Courtyard',
+    bounds: { minX: 30, maxX: 66, minZ: -30, maxZ: 28 },
+    elevationRange: [0.0, 14.2],
+    tacticalNotes: 'Enterable East engineering wing with open doorways, interior staircases to upper balconies, and East Skybridge connection.',
   },
   {
-    id: '06_Cafeteria_FoodCourt_Kiosk',
-    name: 'Cafeteria, Food Court & Blue Chai Kiosk',
-    code: 'CAFE',
-    minX: 11,
-    maxX: 40,
-    minZ: 10,
-    maxZ: 37,
+    id: 'basement_garage',
+    nodeGroupName: '05_Basement_Garage_And_Sports',
+    displayName: 'Subterranean Garage Ramp & Table Tennis Bay',
+    bounds: { minX: -54, maxX: -18, minZ: 28, maxZ: 54 },
+    elevationRange: [-3.6, 1.3],
+    tacticalNotes: 'Walkable striped vehicle ramp descending to Y = -3.6m underground garage & sports hall.',
   },
   {
-    id: '07_Sports_Amphitheater_Tower',
-    name: 'Cricket Ground, Stone Amphitheater & Water Tower',
-    code: 'SPORT',
-    minX: -78,
-    maxX: -20,
-    minZ: -56,
-    maxZ: 56,
+    id: 'cafeteria_kiosk',
+    nodeGroupName: '06_Cafeteria_FoodCourt_Kiosk',
+    displayName: 'East Cafeteria, Food Court & Chai Life Kiosk',
+    bounds: { minX: 28, maxX: 74, minZ: 28, maxZ: 64 },
+    elevationRange: [0.0, 5.2],
+    tacticalNotes: 'Enterable Food Court pavilion and signature Blue Chai Life Kiosk with open archways.',
   },
   {
-    id: '08_Quadrangle_Badminton',
-    name: 'Central Flagpole Quadrangle & Badminton Court',
-    code: 'QUAD',
-    minX: -19,
-    maxX: 20,
-    minZ: -20,
-    maxZ: 18,
+    id: 'sports_amphitheater',
+    nodeGroupName: '07_Sports_Amphitheater_Tower',
+    displayName: 'North Sports Ground, Amphitheater & Water Tower',
+    bounds: { minX: -84, maxX: 84, minZ: -78, maxZ: -38 },
+    elevationRange: [0.0, 23.4],
+    tacticalNotes: 'Cricket pitch, walkable 9-tier Stone Amphitheater steps, and walkable Sniper Stairway up the Water Tower platform.',
   },
   {
-    id: '01_Main_Gate_Avenue',
-    name: 'Main Wrought-Iron Gatehouse & South Avenue',
-    code: 'GATE',
-    minX: -18,
-    maxX: 18,
-    minZ: 18,
-    maxZ: 74,
+    id: 'quadrangle_badminton',
+    nodeGroupName: '08_Quadrangle_Badminton',
+    displayName: 'Central Flagpole Quadrangle & Badminton Courts',
+    bounds: { minX: -29, maxX: 29, minZ: -6, maxZ: 48 },
+    elevationRange: [0.0, 11.5],
+    tacticalNotes: 'Central Flagpole Plaza flanked by West & East outdoor green Badminton Courts.',
   },
 ];
 
-export function getCampusZoneName(x: number, z: number): string {
+export function findCampusZoneAtPosition(x: number, z: number): CampusZoneSpec {
   for (const zone of CAMPUS_ATLAS_ZONES) {
-    if (x >= zone.minX && x <= zone.maxX && z >= zone.minZ && z <= zone.maxZ) {
-      return zone.name;
+    if (
+      x >= zone.bounds.minX &&
+      x <= zone.bounds.maxX &&
+      z >= zone.bounds.minZ &&
+      z <= zone.bounds.maxZ
+    ) {
+      return zone;
     }
   }
-  return 'Campus Perimeter Avenue';
+  return CAMPUS_ATLAS_ZONES[7];
 }
 
-export interface AABBBox {
+export interface AABB2D {
   minX: number;
   maxX: number;
   minZ: number;
@@ -882,24 +846,49 @@ export interface AABBBox {
   label?: string;
 }
 
-/**
- * Resolves circle-vs-AABB collision in the XZ plane so neither player nor zombies/NPCs
- * ever walk through solid building walls or obstacles while still allowing entry through
- * open building portals, undercrofts, and corridors.
- */
+export interface WallCollider3D {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  minY: number;
+  maxY: number;
+  label?: string;
+}
+
+export interface StairRampCollider {
+  id: string;
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  axis: 'x' | 'z';
+  startCoord: number;
+  endCoord: number;
+  startY: number;
+  endY: number;
+}
+
+export interface FloorSlabCollider {
+  id: string;
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  elevationY: number;
+}
+
 export function resolveXZCollision(
   x: number,
   z: number,
   radius: number,
-  colliders: AABBBox[],
-  worldBounds = { minX: -86, maxX: 86, minZ: -76, maxZ: 70 }
+  colliders: AABB2D[]
 ): { x: number; z: number; collided: boolean } {
-  let outX = Math.max(worldBounds.minX, Math.min(worldBounds.maxX, x));
-  let outZ = Math.max(worldBounds.minZ, Math.min(worldBounds.maxZ, z));
+  let outX = Math.max(-87, Math.min(87, x));
+  let outZ = Math.max(-76, Math.min(72, z));
   let collided = false;
 
-  for (let i = 0; i < colliders.length; i++) {
-    const box = colliders[i];
+  for (const box of colliders) {
     const closestX = Math.max(box.minX, Math.min(outX, box.maxX));
     const closestZ = Math.max(box.minZ, Math.min(outZ, box.maxZ));
     const dx = outX - closestX;
@@ -914,7 +903,6 @@ export function resolveXZCollision(
         outX += (dx / dist) * overlap;
         outZ += (dz / dist) * overlap;
       } else {
-        // Inside box: push out via nearest edge
         const leftPen = Math.abs(outX - box.minX);
         const rightPen = Math.abs(box.maxX - outX);
         const topPen = Math.abs(outZ - box.minZ);
@@ -929,4 +917,107 @@ export function resolveXZCollision(
   }
 
   return { x: outX, z: outZ, collided };
+}
+
+export function resolve3DMovement(
+  targetX: number,
+  currentY: number,
+  targetZ: number,
+  radius: number,
+  walls: WallCollider3D[],
+  stairs: StairRampCollider[],
+  floors: FloorSlabCollider[]
+): { x: number; y: number; z: number; collided: boolean; onStairs: boolean } {
+  let outX = Math.max(-87, Math.min(87, targetX));
+  let outZ = Math.max(-76, Math.min(72, targetZ));
+  let collided = false;
+
+  let stairElevation: number | null = null;
+  for (const s of stairs) {
+    if (outX >= s.minX && outX <= s.maxX && outZ >= s.minZ && outZ <= s.maxZ) {
+      const coord = s.axis === 'z' ? outZ : outX;
+      const span = s.endCoord - s.startCoord;
+      const t = span !== 0 ? Math.max(0, Math.min(1, (coord - s.startCoord) / span)) : 0;
+      const yAtStair = s.startY + t * (s.endY - s.startY);
+      if (Math.abs(currentY - yAtStair) <= 2.2) {
+        stairElevation = yAtStair;
+        break;
+      }
+    }
+  }
+
+  const effectiveY = stairElevation !== null ? stairElevation : currentY;
+
+  for (const wall of walls) {
+    if (wall.maxY <= effectiveY + 0.25 || wall.minY >= effectiveY + 1.6) {
+      continue;
+    }
+
+    const closestX = Math.max(wall.minX, Math.min(outX, wall.maxX));
+    const closestZ = Math.max(wall.minZ, Math.min(outZ, wall.maxZ));
+    const dx = outX - closestX;
+    const dz = outZ - closestZ;
+    const distSq = dx * dx + dz * dz;
+
+    if (distSq < radius * radius) {
+      collided = true;
+      if (distSq > 0.00001) {
+        const dist = Math.sqrt(distSq);
+        const overlap = radius - dist;
+        outX += (dx / dist) * overlap;
+        outZ += (dz / dist) * overlap;
+      } else {
+        const leftPen = Math.abs(outX - wall.minX);
+        const rightPen = Math.abs(wall.maxX - outX);
+        const topPen = Math.abs(outZ - wall.minZ);
+        const bottomPen = Math.abs(wall.maxZ - outZ);
+        const minPen = Math.min(leftPen, rightPen, topPen, bottomPen);
+        if (minPen === leftPen) outX = wall.minX - radius;
+        else if (minPen === rightPen) outX = wall.maxX + radius;
+        else if (minPen === topPen) outZ = wall.minZ - radius;
+        else outZ = wall.maxZ + radius;
+      }
+    }
+  }
+
+  let finalY = 0;
+  let onStairs = false;
+
+  for (const s of stairs) {
+    if (outX >= s.minX && outX <= s.maxX && outZ >= s.minZ && outZ <= s.maxZ) {
+      const coord = s.axis === 'z' ? outZ : outX;
+      const span = s.endCoord - s.startCoord;
+      const t = span !== 0 ? Math.max(0, Math.min(1, (coord - s.startCoord) / span)) : 0;
+      const yAtStair = s.startY + t * (s.endY - s.startY);
+      if (Math.abs(currentY - yAtStair) <= 2.2) {
+        finalY = Number(yAtStair.toFixed(3));
+        onStairs = true;
+        break;
+      }
+    }
+  }
+
+  if (!onStairs) {
+    let bestSlabY: number | null = null;
+    for (const slab of floors) {
+      if (outX >= slab.minX && outX <= slab.maxX && outZ >= slab.minZ && slab.maxZ >= outZ) {
+        if (slab.elevationY <= currentY + 1.25) {
+          if (bestSlabY === null || slab.elevationY > bestSlabY) {
+            bestSlabY = slab.elevationY;
+          }
+        }
+      }
+    }
+    if (bestSlabY !== null) {
+      if (currentY > bestSlabY + 0.4) {
+        finalY = Math.max(bestSlabY, Number((currentY - 0.35).toFixed(3)));
+      } else {
+        finalY = bestSlabY;
+      }
+    } else {
+      finalY = currentY > 0.4 ? Math.max(0, Number((currentY - 0.35).toFixed(3))) : 0;
+    }
+  }
+
+  return { x: outX, y: finalY, z: outZ, collided, onStairs };
 }

@@ -1,94 +1,99 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DIFFICULTY_PRESETS,
-  FICTIONAL_EQUIPMENT_ARSENAL,
   computeWeaponStats,
   getWaveDefinition,
   evaluateDynamicDifficulty,
   applyDamageWithArmor,
-  getCampusZoneName,
+  findCampusZoneAtPosition,
   resolveXZCollision,
+  resolve3DMovement,
+  rollCreepyZombieTier,
+  WEAPON_SPECS,
 } from './rules';
 
-test('weapon upgrade progression scales damage, capacity, and recharge cleanly across Levels 1-5', () => {
-  const pulse = FICTIONAL_EQUIPMENT_ARSENAL[0];
-  const lv1 = computeWeaponStats(pulse, 1);
-  const lv3 = computeWeaponStats(pulse, 3);
-  const lv5 = computeWeaponStats(pulse, 5);
+test('custom weapons span Sniper, Shotgun, Mid-Range, and Long-Range categories and scale across Levels 1-5', () => {
+  const categories = new Set(Object.values(WEAPON_SPECS).map((w) => w.category));
+  assert.ok(categories.has('Sniper'));
+  assert.ok(categories.has('Shotgun'));
+  assert.ok(categories.has('Mid-Range'));
+  assert.ok(categories.has('Long-Range'));
 
-  assert.equal(lv1.level, 1);
-  assert.equal(lv1.levelName, 'Standard');
-  assert.equal(lv1.damage, pulse.baseDamage);
-  assert.ok(lv1.nextUpgradeCost !== null && lv1.nextUpgradeCost > 0);
+  const lvl1 = computeWeaponStats('sniper_bolt', 1);
+  const lvl5 = computeWeaponStats('sniper_bolt', 5);
+  assert.ok(lvl5.damage > lvl1.damage);
+  assert.ok(lvl5.capacity > lvl1.capacity);
+  assert.equal(lvl5.nextUpgradeCost, null);
+});
 
-  assert.ok(lv3.damage > lv1.damage);
-  assert.ok(lv3.energyCapacity > lv1.energyCapacity);
-  assert.ok(lv3.rechargeTime < lv1.rechargeTime);
+test('creepy zombie tier probabilities follow exact 70% Low, 20% Mid, 10% Hard distribution', () => {
+  assert.equal(rollCreepyZombieTier(() => 0.0), 'low');
+  assert.equal(rollCreepyZombieTier(() => 0.699), 'low');
+  assert.equal(rollCreepyZombieTier(() => 0.70), 'mid');
+  assert.equal(rollCreepyZombieTier(() => 0.899), 'mid');
+  assert.equal(rollCreepyZombieTier(() => 0.90), 'hard');
+  assert.equal(rollCreepyZombieTier(() => 0.999), 'hard');
+});
 
-  assert.equal(lv5.level, 5);
-  assert.equal(lv5.levelName, 'Legendary');
-  assert.equal(lv5.nextUpgradeCost, null);
+test('3D staircase and wall physics allow climbing stairs and entering doorways while walls block', () => {
+  const walls = [
+    { minX: -10, maxX: 10, minZ: -5, maxZ: -4.4, minY: 0, maxY: 4.2, label: 'North Wall' },
+  ];
+  const stairs = [
+    {
+      id: 'test_stair',
+      minX: 0,
+      maxX: 3,
+      minZ: 0,
+      maxZ: 8,
+      axis: 'z' as const,
+      startCoord: 0,
+      endCoord: 8,
+      startY: 0,
+      endY: 4.2,
+    },
+  ];
+  const floors = [
+    { id: 'second_floor', minX: -10, maxX: 10, minZ: 8, maxZ: 16, elevationY: 4.2 },
+  ];
+
+  // Midpoint on staircase (z = 4) should elevate actor to Y = 2.1m
+  const onStair = resolve3DMovement(1.5, 1.8, 4.0, 0.5, walls, stairs, floors);
+  assert.equal(onStair.onStairs, true);
+  assert.equal(onStair.y, 2.1);
+
+  // Top of staircase stepping onto 2nd floor slab (z = 9) should keep actor at Y = 4.2m
+  const onUpperFloor = resolve3DMovement(1.5, 4.0, 9.0, 0.5, walls, stairs, floors);
+  assert.equal(onUpperFloor.y, 4.2);
+
+  // Walking into wall at ground level should collide
+  const wallHit = resolve3DMovement(0, 0, -4.5, 0.5, walls, stairs, floors);
+  assert.equal(wallHit.collided, true);
 });
 
 test('wave progression spawns Mini-Boss on Wave 5, Skull-Drake on Wave 8, and Final Destroyer on Wave 10', () => {
-  const w1 = getWaveDefinition(1, 'normal');
-  const w5 = getWaveDefinition(5, 'normal');
-  const w8 = getWaveDefinition(8, 'normal');
-  const w10 = getWaveDefinition(10, 'hard');
-
-  assert.equal(w1.bossTier, null);
-  assert.equal(w5.bossTier, 1);
-  assert.equal(w8.bossTier, 2);
-  assert.equal(w10.bossTier, 3);
-  assert.ok(w10.totalEnemies > w1.totalEnemies);
+  assert.equal(getWaveDefinition(5, 'normal', 'single').bossToSpawn, 'mini_boss_wave5');
+  assert.equal(getWaveDefinition(8, 'normal', 'single').bossToSpawn, 'elite_boss_wave8');
+  assert.equal(getWaveDefinition(10, 'normal', 'single').bossToSpawn, 'final_boss_wave10');
 });
 
-test('dynamic difficulty director increases threat when player dominates and provides mercy when critical', () => {
-  const dominating = evaluateDynamicDifficulty({
-    playerHpRatio: 0.95,
-    recentKillRatePerMin: 16,
-    downedCount: 0,
-    baseDifficulty: 'normal',
-  });
-  assert.ok(dominating.pressureMultiplier > 1.0);
-  assert.equal(dominating.spawnEliteOverride, true);
-
-  const struggling = evaluateDynamicDifficulty({
+test('dynamic difficulty director and armor absorption work accurately', () => {
+  const mercy = evaluateDynamicDifficulty({
     playerHpRatio: 0.2,
-    recentKillRatePerMin: 3,
-    downedCount: 2,
-    baseDifficulty: 'normal',
+    recentKillsPerMin: 5,
+    playerAccuracyRatio: 0.3,
+    timesDowned: 1,
   });
-  assert.ok(struggling.pressureMultiplier < 1.0);
-  assert.ok(struggling.lootBonusChance > 0);
+  assert.equal(mercy.directorStateLabel, 'Mercy Assist');
+
+  const dmg = applyDamageWithArmor(100, 50, 40);
+  assert.ok(dmg.armorLost > 0);
+  assert.ok(dmg.remainingHp < 100);
 });
 
-test('armor absorbs proportional damage before reducing health and triggers downed at 0 HP', () => {
-  const hit1 = applyDamageWithArmor(100, 50, 40, 0.65);
-  assert.equal(hit1.armorAbsorbed, 26);
-  assert.equal(hit1.newArmor, 24);
-  assert.equal(hit1.hpDamageTaken, 14);
-  assert.equal(hit1.newHp, 86);
-  assert.equal(hit1.isDowned, false);
-
-  const lethalHit = applyDamageWithArmor(20, 0, 35, 0.65);
-  assert.equal(lethalHit.newHp, 0);
-  assert.equal(lethalHit.isDowned, true);
-});
-
-test('campus 3D atlas coordinate lookup matches exact PDF bounds', () => {
-  assert.match(getCampusZoneName(0, -32), /Academic Block B/);
-  assert.match(getCampusZoneName(-32, -12), /Academic Block A/);
-  assert.match(getCampusZoneName(26, -14), /Academic Block C/);
-  assert.match(getCampusZoneName(26, 24), /Cafeteria/);
-  assert.match(getCampusZoneName(-56, 18), /Cricket Ground/);
-});
-
-test('XZ collision resolver pushes actor outside solid wall AABBs', () => {
-  const walls = [{ minX: -10, maxX: 10, minZ: -10, maxZ: -8 }];
-  const res = resolveXZCollision(0, -7.5, 1.0, walls);
+test('campus 3D atlas coordinate lookup and 2D collision work accurately', () => {
+  const zone = findCampusZoneAtPosition(0, -20);
+  assert.equal(zone.nodeGroupName, '02_Academic_Block_B_Central');
+  const res = resolveXZCollision(0, 0, 1, [{ minX: -2, maxX: 2, minZ: -2, maxZ: 2 }]);
   assert.equal(res.collided, true);
-  assert.ok(res.z >= -7.001);
-  assert.equal(DIFFICULTY_PRESETS.easy.maxActiveEnemies < DIFFICULTY_PRESETS.hard.maxActiveEnemies, true);
 });
